@@ -1,0 +1,114 @@
+DROP TABLE IF EXISTS individual CASCADE;
+DROP TABLE IF EXISTS instruktor CASCADE;
+DROP TABLE IF EXISTS rezervace CASCADE;
+DROP TABLE IF EXISTS rodic CASCADE;
+DROP TABLE IF EXISTS rozvrh_instruktora CASCADE;
+DROP TABLE IF EXISTS skupina CASCADE;
+DROP TABLE IF EXISTS smlouva CASCADE;
+DROP TABLE IF EXISTS student CASCADE;
+DROP TABLE IF EXISTS rozvrh_instruktora_rezervace CASCADE;
+DROP TABLE IF EXISTS student_rezervace CASCADE;
+-- End of removing
+
+CREATE TABLE individual (
+    level_ind INTEGER NOT NULL
+);
+ALTER TABLE individual ADD CONSTRAINT pk_individual PRIMARY KEY (level_ind);
+
+CREATE TABLE instruktor (
+    id_in SERIAL NOT NULL,
+    i_jmeno VARCHAR(256) NOT NULL,
+    i_prijmeni VARCHAR(256) NOT NULL,
+    i_lyze BOOLEAN NOT NULL,
+    i_snowboard BOOLEAN NOT NULL,
+    i_datum_narozeni DATE,
+    i_tel_cislo VARCHAR(20),
+    i_email VARCHAR(256)
+);
+ALTER TABLE instruktor ADD CONSTRAINT pk_instruktor PRIMARY KEY (id_in);
+
+CREATE TABLE rezervace (
+    id_re SERIAL NOT NULL,
+    level_ind INTEGER,
+    level_sku INTEGER,
+    datum DATE NOT NULL,
+    r_od TIME NOT NULL,
+    r_do TIME NOT NULL,
+    zaplaceno BOOLEAN NOT NULL,
+    lyze_snowboard VARCHAR(10) NOT NULL,
+    splneno BOOLEAN
+);
+ALTER TABLE rezervace ADD CONSTRAINT pk_rezervace PRIMARY KEY (id_re);
+
+CREATE TABLE rodic (
+    id_ro SERIAL NOT NULL,
+    r_jmeno VARCHAR(256) NOT NULL,
+    r_prijmeni VARCHAR(256) NOT NULL,
+    r_tel_cislo VARCHAR(20),
+    r_email VARCHAR(256)
+);
+ALTER TABLE rodic ADD CONSTRAINT pk_rodic PRIMARY KEY (id_ro);
+
+CREATE TABLE rozvrh_instruktora (
+    s_datum DATE NOT NULL,
+    id_in INTEGER NOT NULL,
+    s_od TIME,
+    s_do TIME
+);
+ALTER TABLE rozvrh_instruktora ADD CONSTRAINT pk_rozvrh_instruktora PRIMARY KEY (s_datum, id_in);
+
+CREATE TABLE skupina (
+    level_sku INTEGER NOT NULL
+);
+ALTER TABLE skupina ADD CONSTRAINT pk_skupina PRIMARY KEY (level_sku);
+
+CREATE TABLE smlouva (
+    id_sm SERIAL NOT NULL,
+    id_in INTEGER NOT NULL,
+    pocatek VARCHAR(256),
+    konec VARCHAR(256),
+    cislo_uctu VARCHAR(256),
+    odmena_hodinu INTEGER
+);
+ALTER TABLE smlouva ADD CONSTRAINT pk_smlouva PRIMARY KEY (id_sm);
+
+CREATE TABLE student (
+    id_st SERIAL NOT NULL,
+    id_ro INTEGER NOT NULL,
+    s_jmeno VARCHAR(256) NOT NULL,
+    s_prijmeni VARCHAR(256) NOT NULL,
+    level_lyze INTEGER NOT NULL,
+    level_snowboard INTEGER NOT NULL,
+    s_datum_narozeni VARCHAR(256)
+);
+ALTER TABLE student ADD CONSTRAINT pk_student PRIMARY KEY (id_st);
+
+CREATE TABLE rozvrh_instruktora_rezervace (
+    s_datum DATE NOT NULL,
+    id_in INTEGER NOT NULL,
+    id_re INTEGER NOT NULL
+);
+ALTER TABLE rozvrh_instruktora_rezervace ADD CONSTRAINT pk_rozvrh_instruktora_rezervace PRIMARY KEY (s_datum, id_in, id_re);
+
+CREATE TABLE student_rezervace (
+    id_st INTEGER NOT NULL,
+    id_re INTEGER NOT NULL
+);
+ALTER TABLE student_rezervace ADD CONSTRAINT pk_student_rezervace PRIMARY KEY (id_st, id_re);
+
+ALTER TABLE rezervace ADD CONSTRAINT fk_rezervace_individual FOREIGN KEY (level_ind) REFERENCES individual (level_ind) ON DELETE CASCADE;
+ALTER TABLE rezervace ADD CONSTRAINT fk_rezervace_skupina FOREIGN KEY (level_sku) REFERENCES skupina (level_sku) ON DELETE CASCADE;
+
+ALTER TABLE rozvrh_instruktora ADD CONSTRAINT fk_rozvrh_instruktora_instrukto FOREIGN KEY (id_in) REFERENCES instruktor (id_in) ON DELETE CASCADE;
+
+ALTER TABLE smlouva ADD CONSTRAINT fk_smlouva_instruktor FOREIGN KEY (id_in) REFERENCES instruktor (id_in) ON DELETE CASCADE;
+
+ALTER TABLE student ADD CONSTRAINT fk_student_rodic FOREIGN KEY (id_ro) REFERENCES rodic (id_ro) ON DELETE CASCADE;
+
+ALTER TABLE rozvrh_instruktora_rezervace ADD CONSTRAINT fk_rozvrh_instruktora_rezervace FOREIGN KEY (s_datum, id_in) REFERENCES rozvrh_instruktora (s_datum, id_in) ON DELETE CASCADE;
+ALTER TABLE rozvrh_instruktora_rezervace ADD CONSTRAINT fk_rozvrh_instruktora_rezerva_1 FOREIGN KEY (id_re) REFERENCES rezervace (id_re) ON DELETE CASCADE;
+
+ALTER TABLE student_rezervace ADD CONSTRAINT fk_student_rezervace_student FOREIGN KEY (id_st) REFERENCES student (id_st) ON DELETE CASCADE;
+ALTER TABLE student_rezervace ADD CONSTRAINT fk_student_rezervace_rezervace FOREIGN KEY (id_re) REFERENCES rezervace (id_re) ON DELETE CASCADE;
+
+ALTER TABLE rezervace ADD CONSTRAINT xc_rezervace_level_ind_level_sk CHECK ((level_ind IS NOT NULL AND level_sku IS NULL) OR (level_ind IS NULL AND level_sku IS NOT NULL));
