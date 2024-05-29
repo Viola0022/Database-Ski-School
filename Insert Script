@@ -1,0 +1,238 @@
+-- Clean tables
+CREATE OR REPLACE FUNCTION clean_tables() RETURNS void AS
+$$
+DECLARE
+    l_stmt text;
+BEGIN
+    SELECT 'TRUNCATE ' || STRING_AGG(FORMAT('%I.%I', schemaname, tablename), ', ')
+    INTO l_stmt
+    FROM pg_tables
+    WHERE schemaname IN ('public');
+
+    IF l_stmt IS NOT NULL THEN
+        EXECUTE l_stmt || ' CASCADE';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Restart sequences
+CREATE OR REPLACE FUNCTION restart_sequences() RETURNS void AS
+$$
+DECLARE
+    i TEXT;
+    sequence_name TEXT;
+BEGIN
+    FOR i IN (SELECT column_default 
+              FROM information_schema.columns 
+              WHERE column_default SIMILAR TO 'nextval%')
+    LOOP
+        sequence_name := SUBSTRING(SUBSTRING(i FROM '''[a-zA-Z_0-9.]*') FROM '[a-zA-Z_0-9.]+');
+        EXECUTE 'ALTER SEQUENCE ' || sequence_name || ' RESTART WITH 1;';
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Execute the functions
+SELECT clean_tables();
+SELECT restart_sequences();
+
+-- konec resetu
+
+-- konec mazání
+-- mohli bychom použít i jednotlivé příkazy truncate na každou tabulku
+
+-- Insert data into Instruktor
+INSERT INTO Instruktor (id_in, i_jmeno, i_prijmeni, i_lyze, i_snowboard, i_datum_narozeni, i_tel_cislo, i_email)
+    VALUES
+    (DEFAULT, 'John', 'Smith', TRUE, FALSE, '2006-04-15', '123456789', 'smith@gmail.com'),
+    (DEFAULT, 'Emily', 'Johnson', TRUE, TRUE, '1999-09-22', '234567890', 'emjohn@gmail.com'),
+    (DEFAULT, 'Michael', 'Williams', FALSE, TRUE, '1995-12-10', '345678901', 'williams@gmail.com'),
+    (DEFAULT, 'Sarah', 'Jones', TRUE, FALSE, '1988-07-05', '456789012', 'sarahj@gmail.com'),
+    (DEFAULT, 'David', 'Brown', TRUE, FALSE, '1985-03-18', '567890123', 'dbrown@gmail.com'),
+    (DEFAULT, 'Jessica', 'Davisano', TRUE, FALSE, '1982-11-29', '678901234', 'jess@gmail.com'),
+    (DEFAULT, 'Daniel', 'Miller', FALSE, TRUE, '1990-05-08', '789012345', 'miller@gmail.com'),
+    (DEFAULT, 'Ashley', 'Wilson', FALSE, TRUE, '1983-10-17', '890123456', 'wilson@gmail.com'),
+    (DEFAULT, 'Christopher', 'Mooreano', TRUE, FALSE, '2000-08-25', '901234567', 'mooreano@gmail.com'),
+    (DEFAULT, 'Samantha', 'Taylor', TRUE, TRUE, '1992-06-14', '012345678', 'taysam@gmail.com'),
+    (DEFAULT, 'Matthew', 'Anderson', FALSE, TRUE, '1980-01-30', '112233445', 'matty@gmail.com'),
+    (DEFAULT, 'Jennifer', 'Thomas', FALSE, TRUE, '1998-02-20', '223344556', 'thomas@gmail.com'),
+    (DEFAULT, 'James', 'Jacksonano', TRUE, FALSE, '1987-09-03', '334455667', 'jamiejacks@gmail.com'),
+    (DEFAULT, 'Amanda', 'White', TRUE, FALSE, '1989-11-11', '445566778', 'white@gmail.com'),
+    (DEFAULT, 'Andrew', 'Harris', FALSE, TRUE, '2002-12-27', '556677889', 'harris@gmail.com'),
+    (DEFAULT, 'Brittany', 'Martin', TRUE, FALSE, '1993-04-08', '667788990', 'brittmartin@gmail.com'),
+    (DEFAULT, 'Robert', 'Thompsonano', TRUE, TRUE, '2004-10-03', '778899001', 'thompsonano@gmail.com'),
+    (DEFAULT, 'Elizabeth', 'Garcia', FALSE, TRUE, '2001-06-19', '889900112', 'lizagarcia@gmail.com'),
+    (DEFAULT, 'William', 'Martinez', TRUE, FALSE, '1997-08-07', '990011223', 'willmartinez@gmail.com'),
+    (DEFAULT, 'Megan', 'Robinson', TRUE, FALSE, '1984-05-23', '123123123', 'robinson@gmail.com');
+
+-- Insert data into Rodic with specific IDs
+INSERT INTO rodic (id_ro, r_jmeno, r_prijmeni, r_tel_cislo, r_email) VALUES
+(1, 'Emma', 'Anderson', '123456789', 'emma.anderson@google.com'),
+(2, 'William', 'Thompson', '234567890', 'william.thompson@google.com'),
+(3, 'Oliver', 'Garcia', '345678901', 'oliver.garcia@google.com'),
+(4, 'Charlotte', 'Martinez', '456789012', 'charlotte.martinez@google.com'),
+(5, 'Liam', 'Harris', '567890123', 'liam.harris@google.com'),
+(6, 'Ava', 'Clark', '678901234', 'ava.clark@google.com'),
+(7, 'James', 'White', '789012345', 'james.white@google.com'),
+(8, 'Olivia', 'King', '890123456', 'olivia.king@google.com'),
+(9, 'Noah', 'Taylor', '901234567', 'noah.taylor@google.com'),
+(10, 'Sophia', 'Wilson', '012345678', 'sophia.wilson@google.com'),
+(11, 'Isabella', 'Young', '123456789', 'isabella.young@google.com'),
+(12, 'Benjamin', 'Adams', '234567890', 'benjamin.adams@google.com'),
+(13, 'Ethan', 'Rivera', '345678901', 'ethan.rivera@google.com'),
+(14, 'Charlotte', 'Garcia', '456789012', 'charlotte.garcia@google.com'),
+(15, 'Amelia', 'Scott', '567890123', 'amelia.scott@google.com');
+
+-- Insert data into Student with specific parent IDs
+INSERT INTO student (id_st, id_ro, s_jmeno, s_prijmeni, level_lyze, level_snowboard, s_datum_narozeni) VALUES
+(1, 1, 'Sophia', 'Anderson', '2', '1', '2010-03-15'),
+(2, 1, 'Anna', 'Anderson', '3', '0', '2015-08-25'),
+(3, 1, 'Adam', 'Anderson', '0', '2', '2013-11-08'),
+(4, 2, 'Liam', 'Thompson', '0', '3', '2012-06-22'),
+(5, 2, 'Anna', 'Thompson', '0', '1', '2013-05-30'),
+(6, 3, 'Anna', 'Garcia', '1', '0', '2014-09-10'),
+(7, 3, 'Ava', 'Garcia', '1', '2', '2011-04-15'),
+(8, 4, 'Ethan', 'Martinez', '3', '0', '2011-12-05'),
+(9, 5, 'Olivia', 'Harris', '0', '2', '2009-08-18'),
+(10, 6, 'Noah', 'Clark', '0', '1', '2016-11-29'),
+(11, 7, 'Isabella', 'White', '2', '0', '2013-04-08'),
+(12, 7, 'Adam', 'White', '3', '0', '2014-12-11'),
+(13, 8, 'Mason', 'King', '1', '0', '2010-10-17'),
+(14, 9, 'Ethan', 'Taylor', '0', '2', '2012-07-14'),
+(15, 10, 'Olivia', 'Wilson', '2', '3', '2010-02-20'),
+(16, 11, 'Noah', 'Young', '1', '0', '2011-09-03'),
+(17, 12, 'Mason', 'Adams', '0', '1', '2016-06-27'),
+(18, 13, 'Ethan', 'Rivera', '0', '3', '2015-07-07'),
+(19, 14, 'Olivia', 'Scott', '2', '1', '2014-10-22'),
+(20, 15, 'Ethan', 'Clark', '3', '0', '2016-02-09'),
+(21, 15, 'Anna', 'Clark', '1', '0', '2020-01-01');
+
+-- Insert data into Individual
+INSERT INTO individual (level_ind) VALUES
+(1), (2), (3);
+
+-- Insert data into Skupina
+INSERT INTO skupina (level_sku) VALUES
+(1), (2), (3);
+
+-- Insert data into Smlouva
+INSERT INTO smlouva (id_in, pocatek, konec, cislo_uctu, odmena_hodinu) VALUES
+(1, '2024-01-01', '2025-12-31', '1234567890', 500),
+(2, '2020-01-01', '2025-12-31', '2345678901', 550),
+(3, '2020-01-01', '2025-12-31', '3456789012', 600),
+(4, '2020-01-01', '2025-12-31', '4567890123', 650),
+(5, '2020-01-01', '2025-12-31', '5678901234', 700),
+(6, '2020-01-01', '2025-12-31', '6789012345', 750),
+(7, '2020-01-01', '2025-12-31', '7890123456', 800),
+(8, '2020-01-01', '2025-12-31', '8901234567', 850),
+(9, '2020-01-01', '2025-12-31', '9012345678', 900),
+(10, '2020-01-01', '2025-12-31', '0123456789', 950),
+(11, '2020-01-01', '2025-12-31', '1112131415', 1000),
+(12, '2020-01-01', '2025-12-31', '1213141516', 1050),
+(13, '2020-01-01', '2025-12-31', '1314151617', 1100),
+(14, '2020-01-01', '2025-12-31', '1415161718', 1150),
+(15, '2020-01-01', '2025-12-31', '1516171819', 1200),
+(16, '2020-01-01', '2025-12-31', '1617181920', 1250),
+(17, '2020-01-01', '2025-12-31', '1718192021', 1300),
+(18, '2020-01-01', '2025-12-31', '1819202122', 1350),
+(19, '2020-01-01', '2025-12-31', '1920212223', 1400),
+(20, '2020-01-01', '2025-12-31', '2021222324', 1450);
+
+-- Insert data into Rozvrh_instruktora to ensure foreign key constraints
+INSERT INTO rozvrh_instruktora (s_datum, id_in, s_od, s_do) VALUES
+('2023-11-10', 1, '09:00', '17:00'),
+('2023-12-05', 2, '09:00', '17:00'),
+('2024-01-20', 3, '09:00', '17:00'),
+('2024-02-15', 4, '09:00', '17:00'),
+('2024-03-05', 5, '09:00', '17:00'),
+('2024-01-10', 6, '09:00', '17:00'),
+('2023-11-15', 7, '09:00', '17:00'),
+('2023-12-10', 8, '09:00', '17:00'),
+('2024-01-25', 9, '09:00', '17:00'),
+('2024-02-20', 10, '09:00', '17:00'),
+('2024-03-10', 11, '09:00', '17:00'),
+('2024-01-05', 12, '09:00', '17:00'),
+('2023-11-25', 13, '09:00', '17:00'),
+('2023-12-15', 14, '09:00', '17:00'),
+('2024-01-30', 15, '09:00', '17:00'),
+('2024-02-25', 16, '09:00', '17:00'),
+('2024-03-15', 17, '09:00', '17:00'),
+('2024-01-15', 18, '09:00', '17:00'),
+('2023-11-20', 19, '09:00', '17:00'),
+('2023-12-20', 20, '09:00', '17:00');
+
+-- Insert data into Rezervace
+-- Insert additional data into Rezervace with levels only 1, 2, 3
+INSERT INTO rezervace (level_ind, level_sku, datum, r_od, r_do, zaplaceno, lyze_snowboard, splneno) VALUES
+(1, NULL, '2023-11-10', '10:00', '11:00', TRUE, 'lyze', FALSE),  -- Instructor 1
+(2, NULL, '2023-12-05', '12:00', '13:00', TRUE, 'snowboard', TRUE), -- Instructor 2
+(3, NULL, '2024-01-20', '14:00', '15:00', FALSE, 'lyze', FALSE), -- Instructor 3
+(NULL, 1, '2024-02-15', '09:00', '10:30', TRUE, 'snowboard', TRUE), -- Instructor 4
+(NULL, 2, '2024-03-05', '11:00', '12:30', TRUE, 'lyze', FALSE), -- Instructor 5
+(NULL, 3, '2024-01-10', '13:00', '14:00', FALSE, 'snowboard', TRUE), -- Instructor 6
+(1, NULL, '2023-11-15', '10:30', '11:30', TRUE, 'lyze', TRUE), -- Instructor 7
+(2, NULL, '2023-12-10', '14:00', '15:00', FALSE, 'snowboard', FALSE), -- Instructor 8
+(3, NULL, '2024-01-25', '13:00', '14:30', TRUE, 'lyze', TRUE), -- Instructor 9
+(NULL, 1, '2024-02-20', '12:00', '13:30', FALSE, 'snowboard', FALSE), -- Instructor 10
+(NULL, 2, '2024-03-10', '11:30', '13:00', TRUE, 'lyze', TRUE), -- Instructor 11
+(NULL, 3, '2024-01-05', '09:00', '10:30', TRUE, 'snowboard', TRUE), -- Instructor 12
+(1, NULL, '2023-11-25', '10:00', '11:30', FALSE, 'lyze', FALSE), -- Instructor 13
+(2, NULL, '2023-12-15', '13:00', '14:00', TRUE, 'snowboard', TRUE), -- Instructor 14
+(3, NULL, '2024-01-30', '14:30', '16:00', FALSE, 'lyze', TRUE), -- Instructor 15
+(NULL, 1, '2024-02-25', '09:30', '11:00', TRUE, 'snowboard', FALSE), -- Instructor 16
+(NULL, 2, '2024-03-15', '13:00', '14:30', TRUE, 'lyze', TRUE), -- Instructor 17
+(NULL, 3, '2024-01-15', '12:30', '14:00', FALSE, 'snowboard', FALSE), -- Instructor 18
+(1, NULL, '2023-11-20', '11:00', '12:30', TRUE, 'lyze', TRUE), -- Instructor 19
+(NULL, 1, '2023-12-20', '10:00', '11:30', FALSE, 'snowboard', FALSE), -- Instructor 20
+(2, NULL, '2024-01-10', '14:00', '15:00', TRUE, 'lyze', FALSE),  -- New Reservation
+(3, NULL, '2023-11-12', '11:00', '12:00', TRUE, 'snowboard', TRUE), -- New Reservation
+(1, NULL, '2024-02-18', '09:00', '10:00', FALSE, 'lyze', FALSE), -- New Reservation
+(NULL, 2, '2024-03-08', '13:00', '14:30', TRUE, 'snowboard', TRUE), -- New Reservation
+(NULL, 3, '2024-01-12', '10:00', '11:30', TRUE, 'lyze', FALSE), -- New Reservation
+(NULL, 1, '2023-12-28', '11:30', '13:00', FALSE, 'snowboard', TRUE), -- New Reservation
+(2, NULL, '2023-11-20', '12:00', '13:00', TRUE, 'lyze', TRUE), -- New Reservation
+(3, NULL, '2024-02-22', '15:00', '16:30', FALSE, 'snowboard', FALSE), -- New Reservation
+(1, NULL, '2024-01-28', '09:00', '10:00', TRUE, 'lyze', TRUE), -- New Reservation
+(NULL, 2, '2024-03-12', '11:00', '12:30', FALSE, 'snowboard', TRUE), -- New Reservation
+(NULL, 3, '2024-01-18', '14:30', '16:00', TRUE, 'lyze', FALSE), -- New Reservation
+(NULL, 1, '2023-12-30', '09:00', '10:30', TRUE, 'snowboard', TRUE), -- New Reservation
+(2, NULL, '2023-11-22', '13:00', '14:00', FALSE, 'lyze', FALSE), -- New Reservation
+(3, NULL, '2024-02-25', '11:30', '13:00', TRUE, 'snowboard', TRUE), -- New Reservation
+(1, NULL, '2024-01-15', '10:00', '11:00', FALSE, 'lyze', TRUE), -- New Reservation
+(NULL, 2, '2024-03-18', '14:00', '15:30', TRUE, 'snowboard', FALSE), -- New Reservation
+(NULL, 3, '2024-01-20', '13:30', '15:00', TRUE, 'lyze', TRUE), -- New Reservation
+(NULL, 1, '2023-12-25', '11:00', '12:30', FALSE, 'snowboard', TRUE), -- New Reservation
+(2, NULL, '2023-11-28', '12:30', '14:00', TRUE, 'lyze', FALSE), -- New Reservation
+(NULL, 3, '2024-02-27', '10:30', '12:00', TRUE, 'snowboard', TRUE); -- New Reservation
+
+-- Link these reservations to students
+INSERT INTO student_rezervace (id_st, id_re) VALUES
+(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6),
+(7, 7), (8, 8), (9, 9), (10, 10), (11, 11), (12, 12),
+(13, 13), (14, 14), (15, 15), (16, 16), (17, 17), (18, 18), (19, 19), (20, 20),
+(1, 21), (2, 22), (3, 23), (4, 24), (5, 25), (6, 26),
+(7, 27), (8, 28), (9, 29), (10, 30), (11, 31), (12, 32),
+(13, 33), (14, 34), (15, 35), (16, 36), (17, 37), (18, 38), (19, 39), (20, 40);
+
+-- Link these reservations to instructors
+INSERT INTO rozvrh_instruktora_rezervace (s_datum, id_in, id_re) VALUES
+('2023-11-10', 1, 1),
+('2023-12-05', 2, 2),
+('2024-01-20', 3, 3),
+('2024-02-15', 4, 4),
+('2024-03-05', 5, 5),
+('2024-01-10', 6, 6),
+('2023-11-15', 7, 7),
+('2023-12-10', 8, 8),
+('2024-01-25', 9, 9),
+('2024-02-20', 10, 10),
+('2024-03-10', 11, 11),
+('2024-01-05', 12, 12),
+('2023-11-25', 13, 13),
+('2023-12-15', 14, 14),
+('2024-01-30', 15, 15),
+('2024-02-25', 16, 16),
+('2024-03-15', 17, 17),
+('2024-01-15', 18, 18),
+('2023-11-20', 19, 19),
+('2023-12-20', 20, 20);
