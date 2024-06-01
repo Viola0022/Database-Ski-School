@@ -1,2 +1,2 @@
-# Database-Ski-School-
+# Database-Ski-School
 PostgreSQL project
